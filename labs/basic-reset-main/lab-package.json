@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "lessonId": "basic-reset-main",
+  "courseId": "basic",
+  "code": "B2",
+  "title": "Cortex-M reset trace",
+  "engine": "renode",
+  "startsPassing": false,
+  "editableFiles": [
+    "starter/main.c",
+    "starter/startup.c"
+  ],
+  "repair": null,
+  "allowedActions": [
+    "build",
+    "simulate",
+    "checks"
+  ]
+}

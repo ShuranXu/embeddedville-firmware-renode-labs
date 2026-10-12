@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "lessonId": "basic-capstone",
+  "courseId": "basic",
+  "code": "B7",
+  "title": "Recover first communication",
+  "engine": "renode",
+  "startsPassing": false,
+  "editableFiles": [
+    "starter/main.c",
+    "starter/startup.c"
+  ],
+  "repair": {
+    "path": "starter/main.c",
+    "before": "#define VECTOR_OK 0\n#define CLOCK_OK 0\n#define UART_OK 0",
+    "after": "#define VECTOR_OK 1\n#define CLOCK_OK 1\n#define UART_OK 1"
+  },
+  "allowedActions": [
+    "build",
+    "simulate",
+    "checks"
+  ]
+}

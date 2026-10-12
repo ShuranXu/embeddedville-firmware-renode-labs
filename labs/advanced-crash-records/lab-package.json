@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "lessonId": "advanced-crash-records",
+  "courseId": "advanced",
+  "code": "A2",
+  "title": "Crash record across watchdog reset",
+  "engine": "renode",
+  "startsPassing": false,
+  "editableFiles": [
+    "starter/main.c",
+    "starter/startup.c"
+  ],
+  "repair": {
+    "path": "starter/main.c",
+    "before": "CRASH_COMMIT_LAST 0",
+    "after": "CRASH_COMMIT_LAST 1"
+  },
+  "allowedActions": [
+    "build",
+    "simulate",
+    "checks"
+  ]
+}

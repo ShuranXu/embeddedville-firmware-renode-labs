@@ -1,0 +1,26 @@
+name: Validate Renode workspaces
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit retained workspace contract
+        run: python3 scripts/audit.py
+      - name: Install Arm toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+      - name: Build every retained fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          for lab in labs/*; do
+            make -C "$lab" clean all
+          done

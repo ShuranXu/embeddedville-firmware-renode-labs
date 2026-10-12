@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "lessonId": "advanced-multi-image",
+  "courseId": "advanced",
+  "code": "A1",
+  "title": "Bootloader-to-application handoff",
+  "engine": "renode",
+  "startsPassing": false,
+  "editableFiles": [
+    "starter/main.c",
+    "starter/startup.c"
+  ],
+  "repair": {
+    "path": "starter/main.c",
+    "before": "APPLICATION_VTOR 0x08000000u",
+    "after": "APPLICATION_VTOR 0x08020000u"
+  },
+  "allowedActions": [
+    "build",
+    "simulate",
+    "checks"
+  ]
+}
