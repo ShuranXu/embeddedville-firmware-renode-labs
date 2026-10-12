@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "lessonId": "basic-uart",
+  "courseId": "basic",
+  "code": "B6",
+  "title": "First trustworthy byte",
+  "engine": "renode",
+  "startsPassing": false,
+  "editableFiles": [
+    "starter/main.c",
+    "starter/startup.c"
+  ],
+  "repair": {
+    "path": "starter/main.c",
+    "before": "USART_BRR 0x0116u",
+    "after": "USART_BRR 0x016Du"
+  },
+  "allowedActions": [
+    "build",
+    "simulate",
+    "checks"
+  ]
+}

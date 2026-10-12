@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import pathlib
+import sys
+
+
+def lab_root() -> pathlib.Path:
+    current = pathlib.Path.cwd().resolve()
+    for candidate in (current, *current.parents):
+        manifest = candidate / "lab-package.json"
+        if manifest.is_file():
+            return candidate
+    raise SystemExit("Run this command from one of the labs/<lesson-id> directories.")
+
+
+root = lab_root()
+lesson = root.name
+command = pathlib.Path(sys.argv[0]).name
+verify = "--verify" in sys.argv[1:]
+main = (root / "starter/main.c").read_text()
+startup = (root / "starter/startup.c").read_text()
+
+fixed = {
+    "basic-memory-startup": "copy_end = &_edata;" in startup,
+    "basic-uart": "USART_BRR 0x016Du" in main,
+    "basic-capstone": all(value in main for value in ("VECTOR_OK 1", "CLOCK_OK 1", "UART_OK 1")),
+    "advanced-multi-image": "APPLICATION_VTOR 0x08020000u" in main,
+    "advanced-crash-records": "CRASH_COMMIT_LAST 1" in main,
+    "advanced-dma-uart": "RING_WRAP_MASK 0x7Fu" in main,
+    "advanced-capstone": "NEGATIVE_FIXTURES_REQUIRED 1" in main,
+}.get(lesson, True)
+
+outputs = {
+    ("basic-reset-main", "read-vectors"): "0x08000000  vector[0] = 0x20020000  initial MSP\n0x08000004  vector[1] = 0x080001A9  Reset_Handler + Thumb bit",
+    ("basic-reset-main", "read-registers"): "MSP=0x20020000\nPC=0x080001A8 (vector[1] with bit 0 removed)",
+    ("basic-reset-main", "trace-reset-to-main"): "Reset_Handler -> runtime init -> main() PASS",
+    ("basic-memory-startup", "show-memory-map"): "_sidata=0x08000128 _sdata=0x20000000 _edata=0x20000008\n_sbss=0x20000008 _ebss=0x20000010",
+    ("basic-memory-startup", "run-memory-test"): ".data[0]=0x11223344 PASS\n.data[1]=0x55667788 PASS\n.bss=0 PASS" if fixed else ".data[0]=0x11223344 PASS\n.data[1]=0x00000000 FAIL expected 0x55667788",
+    ("basic-memory-startup", "warm-reset-test"): "warm-reset .noinit=0xCAFEBABE PASS" if fixed else "warm-reset blocked: repair the .data copy boundary first",
+    ("basic-uart", "calculate-brr"): "PCLK=42000000 baud=115200 BRR=0x016D",
+    ("basic-uart", "run-uart-pattern"): "0x55 measured baud=151079; framing FAIL" if not fixed else "0x55 measured baud=115200; framing PASS",
+    ("basic-uart", "run-uart-check"): "TXE/TC sequence and 8.68 us bit period PASS" if fixed else "BRR mismatch: expected 0x016D",
+    ("basic-capstone", "triage-capstone"): "vector={} clock={} uart={}".format("PASS" if fixed else "FAIL", "PASS" if fixed else "BLOCKED", "PASS" if fixed else "BLOCKED"),
+    ("basic-capstone", "run-capstone"): "PC=0x080001A8 clock=84MHz UART=EVHB PASS" if fixed else "capstone blocked: repair vector, clock, then UART",
+    ("advanced-multi-image", "inspect-scenario"): "VTOR=0x08000000 MSP=0x20020000 PC=0x080201A8",
+    ("advanced-multi-image", "run-handoff-test"): "VTOR=0x08020000; application IRQ PASS" if fixed else "application main reached; IRQ still routes to bootloader FAIL",
+    ("advanced-crash-records", "inspect-scenario"): "EXC_RETURN=0xFFFFFFFD frame=PSP record=partial",
+    ("advanced-crash-records", "run-crash-recovery"): "PSP frame complete; commit-last record PASS" if fixed else "record payload present without final commit marker FAIL",
+    ("advanced-dma-uart", "inspect-scenario"): "Produced=384 Consumed=256 Loss=128",
+    ("advanced-dma-uart", "run-dma-burst"): "N-1/N/N+1 zero-loss matrix PASS" if fixed else "128-byte wrap loses 128 bytes FAIL",
+    ("advanced-capstone", "inspect-scenario"): "clean fixtures PASS; negative fixtures incorrectly accepted",
+    ("advanced-capstone", "run-release-matrix"): "clean PASS; all negative fixtures fail as intended PASS" if fixed else "release gate accepted broken fixtures FAIL",
+}
+
+value = outputs.get((lesson, command))
+if value is None:
+    raise SystemExit(f"{command} is not part of the {lesson} workspace.")
+if verify and not fixed:
+    value += "\nVERIFY FAIL: the seeded invariant remains."
+print(value)
+raise SystemExit(0 if fixed or not verify else 2)
